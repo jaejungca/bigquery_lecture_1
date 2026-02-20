@@ -1,0 +1,193 @@
+---
+title: "BigQuery-Lecture 1"
+format: 
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: right-body
+    number-sections: true
+    embed-resources: true
+editor: visual
+execute: 
+  freeze: auto
+---
+
+# SELECT / FROM / LIMIT
+
+-   **What it does**: picks columns from a table and returns rows.
+
+## Sample Query
+
+``` sql
+
+SELECT event_date, event_name
+FROM `bigquery-public-data.ga4_obfuscated_sample_ecommerce.events_*`
+LIMIT 1000;
+```
+
+## Output
+
+![](images/paste-3.png)
+
+# WHERE filters rows
+
+-   **What it does**: keeps only rows that match conditions.
+
+## Sample Query
+
+``` sql
+-- All the users who purchased on an event date
+SELECT event_date, event_name, user_pseudo_id
+FROM `bigquery-public-data.ga4_obfuscated_sample_ecommerce.events_*`
+WHERE event_name = 'purchase' 
+LIMIT 100;
+```
+
+## Output
+
+![](images/paste-4.png)
+
+# ORDER BY sorts results
+
+-   What it does: sorts rows ascending/descending.
+
+## Sample Query 1
+
+``` sql
+-- Purchases and dates in the order of recency: from most recent to oldest
+SELECT event_date, event_timestamp, event_name
+FROM `bigquery-public-data.ga4_obfuscated_sample_ecommerce.events_*`
+WHERE event_name = 'purchase'
+ORDER BY event_timestamp DESC
+LIMIT 20;
+```
+
+## Output 1
+
+![](images/paste-5.png)
+
+## Sample Query 2
+
+``` sql
+-- Tip for readability (GA4 timestamps are microseconds):
+-- All the events and associated time.
+SELECT 
+  TIMESTAMP_MICROS(event_timestamp) AS event_time,
+  event_name
+FROM `bigquery-public-data.ga4_obfuscated_sample_ecommerce.events_*`
+ORDER BY event_timestamp DESC
+LIMIT 10;
+```
+
+## Output 2
+
+![](images/paste-6.png)
+
+# COUNT, SUM, AVG, MIN, MAX
+
+-   What they do: summarize many rows into a few values.
+
+## Sample Query 1
+
+``` sql
+-- Count total events in a date range
+-- The number of events in the month of December 2020
+SELECT COUNT(*) AS event_count
+FROM `bigquery-public-data.ga4_obfuscated_sample_ecommerce.events_*`
+WHERE _TABLE_SUFFIX BETWEEN '20201201' AND '20201231';
+```
+
+## Output 1
+
+![](images/paste-7.png)
+
+## Sample Query 2
+
+``` sql
+-- Count purchases in a date range
+SELECT COUNT(*) AS purchase_events
+FROM `bigquery-public-data.ga4_obfuscated_sample_ecommerce.events_*`
+WHERE event_name = 'purchase'
+    AND _TABLE_SUFFIX BETWEEN '20201201' AND '20201231';
+```
+
+-   The number of all the purchases made during December 2020.
+
+## Output 2
+
+![](images/paste-8.png)
+
+# GROUP BY controls the grain
+
+-   What it does: defines what one row in your result represents (e.g., per day, per event_name, per user).
+
+## Sample Query 1
+
+``` sql
+-- Events by day
+SELECT event_date, COUNT(*) AS events
+FROM `bigquery-public-data.ga4_obfuscated_sample_ecommerce.events_*`
+WHERE _TABLE_SUFFIX BETWEEN '20201201' AND '20201231'
+GROUP BY event_date
+ORDER BY event_date;
+```
+
+## Output 1
+
+![](images/paste-9.png)
+
+## Sample Query 2
+
+``` sql
+-- Top event types
+SELECT event_name, COUNT(*) AS events
+FROM `bigquery-public-data.ga4_obfuscated_sample_ecommerce.events_*`
+WHERE _TABLE_SUFFIX BETWEEN '20201201' AND '20201231'
+GROUP BY event_name
+ORDER BY events DESC
+LIMIT 15;
+```
+
+## Output 2
+
+![](images/paste-10.png)
+
+# HAVING filters after grouping
+
+-   What it does: filters aggregated results (after GROUP BY).
+
+## Sample Query
+
+``` sql
+-- Only event types with at least 50,000 events
+SELECT event_name, COUNT(*) AS events
+FROM `bigquery-public-data.ga4_obfuscated_sample_ecommerce.events_*`
+WHERE _TABLE_SUFFIX BETWEEN '20201201' AND '20201231'
+GROUP BY event_name
+HAVING COUNT(*) >= 50000
+ORDER BY events DESC;
+```
+
+## Output
+
+![](images/paste-11.png)
+
+# Wildcard tables + \_TABLE_SUFFIX
+
+-   GA4 exports are daily tables like events_20201201.
+
+## Query
+
+``` sql
+-- events_* queries many days, and _TABLE_SUFFIX limits which days you scan (faster/cheaper).
+-- Events by day for the first 7 days of December, 2020.
+SELECT event_date, COUNT(*) AS events
+FROM `bigquery-public-data.ga4_obfuscated_sample_ecommerce.events_*`
+WHERE _TABLE_SUFFIX BETWEEN '20201201' AND '20201207'
+GROUP BY event_date
+ORDER BY event_date;
+```
+
+## Output
+
+![](images/paste-12.png)
