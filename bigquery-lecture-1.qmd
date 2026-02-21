@@ -1,11 +1,17 @@
 ---
 title: "BigQuery-Lecture 1"
+author: "Jae Jung"
+date: today
 format: 
   html:
+    theme: cosmo
     toc: true
     toc-depth: 3
     toc-location: right-body
     number-sections: true
+    code-line-numbers: true
+    code-block-bg: true
+    code-block-border-left: "#31BAE9"
     embed-resources: true
 editor: visual
 execute: 
@@ -14,12 +20,13 @@ execute:
 
 # SELECT / FROM / LIMIT
 
--   **What it does**: picks columns from a table and returns rows.
+::: callout-tip
+**What it does**: picks columns from a table and returns rows.
+:::
 
 ## Sample Query
 
 ``` sql
-
 SELECT event_date, event_name
 FROM `bigquery-public-data.ga4_obfuscated_sample_ecommerce.events_*`
 LIMIT 1000;
@@ -31,12 +38,15 @@ LIMIT 1000;
 
 # WHERE filters rows
 
--   **What it does**: keeps only rows that match conditions.
+::: callout-note
+**What it does**: keeps only rows that match conditions.
+:::
 
 ## Sample Query
 
+> Task: Produce all the users who purchased on an event date
+
 ``` sql
--- All the users who purchased on an event date
 SELECT event_date, event_name, user_pseudo_id
 FROM `bigquery-public-data.ga4_obfuscated_sample_ecommerce.events_*`
 WHERE event_name = 'purchase' 
@@ -49,12 +59,15 @@ LIMIT 100;
 
 # ORDER BY sorts results
 
--   What it does: sorts rows ascending/descending.
+::: callout-tip
+**What it does**: sorts rows ascending/descending
+:::
 
 ## Sample Query 1
 
+> Purchases and dates in the order of recency from most recent to oldest event.
+
 ``` sql
--- Purchases and dates in the order of recency: from most recent to oldest
 SELECT event_date, event_timestamp, event_name
 FROM `bigquery-public-data.ga4_obfuscated_sample_ecommerce.events_*`
 WHERE event_name = 'purchase'
@@ -68,9 +81,13 @@ LIMIT 20;
 
 ## Sample Query 2
 
+::: callout-important
+**Tip for readability**: GA4 timestamps are microseconds
+:::
+
+> **Task**: List all the events and associated time in descending order.
+
 ``` sql
--- Tip for readability (GA4 timestamps are microseconds):
--- All the events and associated time.
 SELECT 
   TIMESTAMP_MICROS(event_timestamp) AS event_time,
   event_name
@@ -85,13 +102,15 @@ LIMIT 10;
 
 # COUNT, SUM, AVG, MIN, MAX
 
--   What they do: summarize many rows into a few values.
+::: callout-tip
+**What they do**: summarize many rows into a few values.
+:::
 
 ## Sample Query 1
 
+> **Task:** Count total events in a date range. That is, what is the number of events in the month of December 2020?
+
 ``` sql
--- Count total events in a date range
--- The number of events in the month of December 2020
 SELECT COUNT(*) AS event_count
 FROM `bigquery-public-data.ga4_obfuscated_sample_ecommerce.events_*`
 WHERE _TABLE_SUFFIX BETWEEN '20201201' AND '20201231';
@@ -103,15 +122,16 @@ WHERE _TABLE_SUFFIX BETWEEN '20201201' AND '20201231';
 
 ## Sample Query 2
 
+> **Task**: Count purchases in a date range
+
 ``` sql
--- Count purchases in a date range
 SELECT COUNT(*) AS purchase_events
 FROM `bigquery-public-data.ga4_obfuscated_sample_ecommerce.events_*`
 WHERE event_name = 'purchase'
     AND _TABLE_SUFFIX BETWEEN '20201201' AND '20201231';
 ```
 
--   The number of all the purchases made during December 2020.
+> **Task**: What is the number of all the purchases made during December 2020.
 
 ## Output 2
 
@@ -119,9 +139,13 @@ WHERE event_name = 'purchase'
 
 # GROUP BY controls the grain
 
--   What it does: defines what one row in your result represents (e.g., per day, per event_name, per user).
+::: callout-note
+**What it does**: defines what one row in your result represents (e.g., per day, per event_name, per user).
+:::
 
 ## Sample Query 1
+
+> **Task**: List event date and event counts by event date in ascending order for December 2020.
 
 ``` sql
 -- Events by day
@@ -137,6 +161,8 @@ ORDER BY event_date;
 ![](images/paste-9.png)
 
 ## Sample Query 2
+
+> **Task**: List top 15 event names and their counts by the event counts.
 
 ``` sql
 -- Top event types
@@ -154,9 +180,13 @@ LIMIT 15;
 
 # HAVING filters after grouping
 
--   What it does: filters aggregated results (after GROUP BY).
+::: callout-tip
+**What it does**: filters aggregated results (after GROUP BY).
+:::
 
 ## Sample Query
+
+> **Task**: List all the events and associated event counts greater than 50,000 in descending order of event counts.
 
 ``` sql
 -- Only event types with at least 50,000 events
@@ -174,13 +204,15 @@ ORDER BY events DESC;
 
 # Wildcard tables + \_TABLE_SUFFIX
 
--   GA4 exports are daily tables like events_20201201.
+::: callout-note
+**What it does**: events\_\* queries many days, and \_TABLE_SUFFIX limits which days you scan (faster/cheaper).
+:::
 
 ## Query
 
+> **Task**: Event counts by event date for the first 7 days of December, 2020.
+
 ``` sql
--- events_* queries many days, and _TABLE_SUFFIX limits which days you scan (faster/cheaper).
--- Events by day for the first 7 days of December, 2020.
 SELECT event_date, COUNT(*) AS events
 FROM `bigquery-public-data.ga4_obfuscated_sample_ecommerce.events_*`
 WHERE _TABLE_SUFFIX BETWEEN '20201201' AND '20201207'
